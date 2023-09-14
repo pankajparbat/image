@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Search App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        #showMoreButton {
+            display: block;
+            margin: 20px auto;
+            background-color: lightblue;
+        }
+
+        .image-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .image-card img {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px; /* Set a fixed height for all images */
+        }
+
+        .image-description {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Image Search App</h1>
+    </header>
+    <div class="container">
+        <input type="text" id="searchInput" placeholder="Enter your search query">
+        <button id="searchButton">Search</button>
+        <!-- Container for displaying image search results -->
+        <div id="results">
+            <!-- Default Images -->
+            <div class="image-card">
+                <img src="https://images.unsplash.com/photo-1687360441284-8f639f0b272d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDF8MHxlZGl0b3JpYWwtZmVlZHwyMXx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=60" alt="Default Image 1">
+                <p class="image-description">Description for Default Image 1</p>
+            </div>
+            <div class="image-card">
+                <img src="https://images.unsplash.com/photo-1694512779470-c62f0bf76501?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwyMHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=60" alt="Default Image 2">
+                <p class="image-description">Description for Default Image 2</p>
+            </div>
+            <div class="image-card">
+                <img src="https://images.unsplash.com/photo-1694191864312-ab0171f598c8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwyOHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=60" alt="Default Image 3">
+                <p class="image-description">Description for Default Image 3</p>
+            </div>
+            <!-- Image search results will be displayed here -->
+        </div>
+
+        <button id="showMoreButton" style="display: none;">Show More</button>
+    </div>
+    
+    <script>
+        const apiKey = 'QSQqdXueXbskhWWnb0yZ-5SmLWYdK2b14A6NsGzqbx8';
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsDiv = document.getElementById('results');
+        const showMoreButton = document.getElementById('showMoreButton');
+        let page = 1;
+
+        // Function to open a new tab with related photos based on alt description
+        function openRelatedPhotos(altDescription) {
+            const relatedQuery = altDescription;
+            const relatedApiUrl = `https://api.unsplash.com/search/photos?query=${relatedQuery}&page=1&per_page=10&client_id=${apiKey}`;
+            window.open(relatedApiUrl, '_blank');
+        }
+
+        // Add click event listeners to each image card
+        resultsDiv.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName === 'IMG') {
+                const altDescription = target.alt;
+                openRelatedPhotos(altDescription);
+            }
+        });
+
+        // Function to fetch images
+        function fetchImages(query, page) {
+            const apiUrl = `https://api.unsplash.com/search/photos?query=${query}&page=${page}&per_page=10&client_id=${apiKey}`;
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (page === 1) {
+                        resultsDiv.innerHTML = ''; // Clear previous results
+                    }
+
+                    data.results.forEach(photo => {
+                        const imageCard = document.createElement('div');
+                        imageCard.classList.add('image-card');
+
+                        const image = document.createElement('img');
+                        image.src = photo.urls.regular;
+                        image.alt = photo.alt_description;
+
+                        const description = document.createElement('p');
+                        description.classList.add('image-description');
+                        description.textContent = photo.alt_description;
+
+                        imageCard.appendChild(image);
+                        imageCard.appendChild(description);
+                        resultsDiv.appendChild(imageCard);
+                    });
+
+                    // Show the "Show More" button if there are more pages of results
+                    if (data.total_pages > page) {
+                        showMoreButton.style.display = 'block';
+                    } else {
+                        showMoreButton.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching images:', error);
+                });
+        }
+
+        searchButton.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query === '') {
+                alert('Please enter a search query');
+                return;
+            }
+            page = 1;
+            fetchImages(query, page);
+        });
+
+        showMoreButton.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            page++;
+            fetchImages(query, page);
+        });
+    </script>
+</body>
+</html>
